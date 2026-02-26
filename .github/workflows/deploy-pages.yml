@@ -1,0 +1,64 @@
+name: Deploy To GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Inject Supabase Config For Deployment
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "Missing GitHub Secrets: SUPABASE_URL and/or SUPABASE_ANON_KEY"
+            exit 1
+          fi
+          cat > src/config.js <<EOF
+          window.supabaseConfig = {
+              url: '$SUPABASE_URL',
+              key: '$SUPABASE_ANON_KEY'
+          };
+          
+          if (window.SUPPRESS_VERBOSE === undefined) window.SUPPRESS_VERBOSE = true;
+          if (window.DEBUG_SUPABASE === undefined) window.DEBUG_SUPABASE = false;
+          if (window.netlifyIdentity && !window.SUPPRESS_VERBOSE) console.log('Running on Netlify');
+          if (!window.SUPPRESS_VERBOSE) {
+              console.log('Configuration loaded');
+              console.log('URL set:', !window.supabaseConfig.url.includes('your-project'));
+              console.log('Key set:', !window.supabaseConfig.key.includes('your-anon-key'));
+          }
+          EOF
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
