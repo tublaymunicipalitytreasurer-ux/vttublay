@@ -1713,11 +1713,9 @@ async function handleSubmit(e) {
             });
         });
 
-        const duplicateNumbers = selectedEntries
-            .map((_, idx) => no + idx)
-            .filter(candidateNo => violations.some(v => v.no === candidateNo));
-        if (duplicateNumbers.length > 0) {
-            alert(`Number(s) already used: ${duplicateNumbers.join(', ')}. Please choose another starting number.`);
+        const duplicateNo = violations.find(v => v.no === no);
+        if (duplicateNo) {
+            alert(`Number ${no} is already assigned to violation #${duplicateNo.no}. Please use a different number.`);
             return;
         }
 
@@ -1735,7 +1733,7 @@ async function handleSubmit(e) {
             const fine = await getFineForOffense(entry.offenseId, entry.level);
 
             const newViolation = {
-                no: no + i,
+                no,
                 name,
                 plateNumber,
                 date,
@@ -3601,4 +3599,8 @@ function makeRowsCollapsible() {
         });
     });
 }
+
+
+
+
 
