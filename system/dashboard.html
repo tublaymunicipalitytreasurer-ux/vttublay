@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Violation Tracker</title>
+    <link rel="stylesheet" href="../system/style.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Violation Tracker System</h1>
+        </header>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by name, plate number, or receipt...">
+                <button id="searchBtn">Search</button>
+            </div>
+            <div class="action-buttons">
+                <button id="addNewBtn" class="add-btn">Add New Violation</button>
+                <button id="exportBtn" class="manage-btn export-btn">Export Excel</button>
+                <button id="importBtn" class="manage-btn import-btn">Import Excel</button>
+                <button id="manageOffensesBtn" class="manage-btn">Manage Offenses</button>
+            </div>
+        </div>
+
+        <div class="controls" style="padding-top: 10px; padding-bottom: 10px;">
+            <div class="filter-box" style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <div class="form-group" style="margin: 0;">
+                    <label style="margin-right: 5px; font-size: 12px;">Status:</label>
+                    <select id="statusFilter" onchange="applyFilters()" style="padding: 6px 10px; font-size: 12px;">
+                        <option value="">All Status</option>
+                        <option value="Unpaid">Unpaid</option>
+                        <option value="Paid">Paid</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label style="margin-right: 5px; font-size: 12px;">Section:</label>
+                    <select id="sectionFilter" onchange="applyFilters()" style="padding: 6px 10px; font-size: 12px;">
+                        <option value="">All Sections</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label style="margin-right: 5px; font-size: 12px;">Date From:</label>
+                    <input type="date" id="dateFromFilter" onchange="applyFilters()"
+                        style="padding: 6px; font-size: 12px;">
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label style="margin-right: 5px; font-size: 12px;">Date To:</label>
+                    <input type="date" id="dateToFilter" onchange="applyFilters()"
+                        style="padding: 6px; font-size: 12px;">
+                </div>
+                <button id="resetFiltersBtn" onclick="resetFilters()"
+                    style="padding: 12px 24px; background: #f39c12; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; margin-right: 16px;">Reset Filters</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="violationTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" onclick="sortTable('no')">NO. <span class="sort-indicator"
+                                id="sort-no">↕️</span></th>
+                        <th class="sortable" onclick="sortTable('name')">Name <span class="sort-indicator"
+                                id="sort-name">↕️</span></th>
+                        <th class="sortable" onclick="sortTable('plateNumber')">Plate Number <span
+                                class="sort-indicator" id="sort-plate">↕️</span></th>
+                        <th class="sortable" onclick="sortTable('date')">Date <span class="sort-indicator"
+                                id="sort-date">↕️</span></th>
+                        <th>Section</th>
+                        <th>Offenses</th>
+                        <th>Level</th>
+                        <th class="sortable" onclick="sortTable('fine')">Fine (₱) <span class="sort-indicator"
+                                id="sort-fine">↕️</span></th>
+                        <th class="sortable" onclick="sortTable('status')">Status <span class="sort-indicator"
+                                id="sort-status">↕️</span></th>
+                        <th>Official Receipt #</th>
+                        <th>Date Paid</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="violationModal" class="modal">
+        <div class="modal-content violation-modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Violation</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="violationForm" class="violation-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="no">No. *</label>
+                            <input type="number" id="no" required min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" id="name" maxlength="100" pattern="[a-zA-Z\\s\\.\\-]{3,100}"
+                                placeholder="Enter full name">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="plateNumber">Plate Number</label>
+                            <input type="text" id="plateNumber" maxlength="20" placeholder="e.g., ABC-1234 or any format">
+                        </div>
+                        <div class="form-group">
+                            <label for="date">Date</label>
+                            <div class="date-input-group">
+                                <input type="date" id="date" placeholder="Optional">
+                                <button type="button" id="clearDateBtn" class="clear-btn">Clear</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="section">Section *</label>
+                            <select id="section" required>
+                                <option value="">Select Section</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="offenses">Offense *</label>
+                            <select id="offenses" required>
+                                <option value="">Select Offense</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="level">Offense Level *</label>
+                            <select id="level" required>
+                                <option value="">Select Level</option>
+                                <option value="1">1st Offense</option>
+                                <option value="2">2nd Offense</option>
+                                <option value="3">3rd Offense</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="fine">Fine Amount (₱) *</label>
+                            <input type="number" id="fine" required min="0" readonly>
+                            <div id="fineInfo" class="fine-info"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-row" id="addAnotherViolationRow">
+                        <div class="form-group">
+                            <small id="offenseHelperText" class="offense-helper-text">Use "Add Another Violation" to create more section/offense/fee rows.</small>
+                            <button type="button" id="addAnotherViolationBtn" class="btn add-another-violation-btn">Add Another Violation</button>
+                        </div>
+                    </div>
+
+                    <div id="additionalViolationsContainer" class="additional-violations-container"></div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="status">Status</label>
+                            <input type="text" id="status" value="Unpaid" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn cancel">Cancel</button>
+                        <button type="submit" class="btn save">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="paymentModal" class="modal payment-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="paymentModalTitle">Mark as Paid</h2>
+                <span class="close" onclick="closePaymentModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="paymentForm">
+                    <div class="form-group">
+                        <label for="paymentName">Name</label>
+                        <input type="text" id="paymentName" readonly class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="paymentOffense">Offense</label>
+                        <input type="text" id="paymentOffense" readonly class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="paymentFine">Fine Amount (₱)</label>
+                        <input type="number" id="paymentFine" readonly class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="officialReceiptNumber">Official Receipt Number *</label>
+                        <input type="text" id="officialReceiptNumber" required class="form-control"
+                            oninput="checkDuplicateReceipt()">
+                        <div id="receiptWarning" class="duplicate-warning">This Official Receipt Number is already used!
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="paymentDate">Payment Date *</label>
+                        <input type="date" id="paymentDate" required class="form-control" value="">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn cancel" onclick="closePaymentModal()">Cancel</button>
+                        <button type="submit" id="paymentSubmitBtn" class="btn save">Confirm Payment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="manageOffensesModal" class="modal">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h2>Manage Offenses</h2>
+                <span class="close" onclick="closeManageOffensesModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="tabs">
+                    <button class="simple-tab-btn active" onclick="switchTab('sections')">Sections</button>
+                    <button class="simple-tab-btn" onclick="switchTab('offenses')">Offenses</button>
+                    <button class="simple-tab-btn" onclick="switchTab('addNew')">Add New</button>
+                </div>
+
+                <div id="sectionsTab" class="tab-content active">
+                    <div class="section-controls">
+                        <button class="simple-add-btn" onclick="addNewSection()">+ Add Section</button>
+                    </div>
+                    <div class="sections-list" id="sectionsList">
+                    </div>
+                </div>
+
+                <div id="offensesTab" class="tab-content">
+                    <div class="filter-section">
+                        <select id="offenseSectionFilter" onchange="filterOffenses()">
+                            <option value="">All Sections</option>
+                        </select>
+                    </div>
+                    <div class="offenses-list" id="offensesList">
+                    </div>
+                </div>
+
+                <div id="addNewTab" class="tab-content">
+                    <form id="newOffenseForm" onsubmit="return addNewOffense(event)">
+                        <div class="form-group">
+                            <label for="newSection">Section *</label>
+                            <select id="newSection" required>
+                                <option value="">Select Section</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="newOffenseName">Offense Name *</label>
+                            <input type="text" id="newOffenseName" required placeholder="Enter offense name">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="firstOffense">1st Offense Fine (₱) *</label>
+                                <input type="number" id="firstOffense" required min="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="secondOffense">2nd Offense Fine (₱) *</label>
+                                <input type="number" id="secondOffense" required min="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="thirdOffense">3rd Offense Fine (₱) *</label>
+                                <input type="number" id="thirdOffense" required min="0">
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn cancel"
+                                onclick="closeManageOffensesModal()">Cancel</button>
+                            <button type="submit" class="btn save">Add Offense</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../src/config.js"></script>
+
+    <script>
+
+        window.supabaseLoaded = false;
+
+
+        window.cdnLoadTimeout = setTimeout(() => {
+            console.error('CDN load timeout - falling back to esm.sh');
+            loadEsmSh();
+        }, 3000);
+
+        function loadEsmSh() {
+            clearTimeout(window.cdnLoadTimeout);
+            var script = document.createElement('script');
+            script.type = 'module';
+            script.textContent = `
+            import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.4';
+            window.supabase = { createClient };
+            window.supabaseLoaded = true;
+            console.log('Supabase loaded from esm.sh');
+        `;
+            script.onerror = function () {
+                console.error('esm.sh failed - check internet connection');
+                window.supabaseLoaded = false;
+            };
+            document.head.appendChild(script);
+        }
+
+
+        var script1 = document.createElement('script');
+        script1.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/dist/umd/supabase.min.js';
+        script1.onload = function () {
+            clearTimeout(window.cdnLoadTimeout);
+            window.supabaseLoaded = true;
+            console.log('Supabase loaded from jsDelivr');
+        };
+        script1.onerror = function () {
+            console.warn('jsDelivr failed, trying unpkg...');
+
+            var script2 = document.createElement('script');
+            script2.src = 'https://unpkg.com/@supabase/supabase-js@2.43.4/dist/umd/supabase.min.js';
+            script2.onload = function () {
+                clearTimeout(window.cdnLoadTimeout);
+                window.supabaseLoaded = true;
+                console.log('Supabase loaded from unpkg');
+            };
+            script2.onerror = function () {
+                console.warn('unpkg failed, trying esm.sh...');
+                loadEsmSh();
+            };
+            document.head.appendChild(script2);
+        };
+        document.head.appendChild(script1);
+    </script>
+
+    <script src="../src/supabaseClient.js"></script>
+
+    <script src="../src/databaseSeeding.js"></script>
+
+    <script src="../src/violationsService.js"></script>
+
+    <script src="../src/authService.js"></script>
+
+    <script src="../system/exportExcel.js"></script>
+    <script src="../system/importExcel.js"></script>
+    <script src="../system/script.js"></script>
+</body>
+
+</html>

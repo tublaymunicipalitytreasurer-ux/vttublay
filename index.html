@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Violation Tracker System</title>
+    <link rel="stylesheet" href="src/loginstyle.css">
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>Violation Tracker System</h1>
+                <p>Please login to continue</p>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Email</label>
+                    <input type="email" id="username" placeholder="Enter your email address">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter password">
+                </div>
+
+                <button type="submit" class="login-btn">Login</button>
+
+            </form>
+        </div>
+    </div>
+
+    <script src="src/config.js" type="text/javascript"></script>
+
+    <script>
+        (function () {
+            try {
+                if (window.SUPPRESS_VERBOSE) {
+                    ['log', 'info', 'debug', 'table', 'trace', 'warn'].forEach(function (m) {
+                        if (console[m]) console[m] = function () {};
+                    });
+                }
+            } catch (e) {
+            }
+        })();
+    </script>
+
+    <script>
+        window.supabaseLoaded = false;
+
+        window.cdnLoadTimeout = setTimeout(() => {
+            console.error('❌ CDN load timeout - falling back to esm.sh');
+            loadEsmSh();
+        }, 3000);
+
+        function loadEsmSh() {
+            clearTimeout(window.cdnLoadTimeout);
+            var script = document.createElement('script');
+            script.type = 'module';
+            script.textContent = `
+            import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.4';
+            window.supabase = { createClient };
+            window.supabaseLoaded = true;
+            console.log('✅ Supabase loaded from esm.sh');
+        `;
+            script.onerror = function () {
+                console.error('❌ esm.sh failed - check internet connection');
+                window.supabaseLoaded = false;
+            };
+            document.head.appendChild(script);
+        }
+
+        var script1 = document.createElement('script');
+        script1.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.43.4/dist/umd/supabase.min.js';
+        script1.onload = function () {
+            clearTimeout(window.cdnLoadTimeout);
+            window.supabaseLoaded = true;
+            console.log('✅ Supabase loaded from jsDelivr');
+        };
+        script1.onerror = function () {
+            console.warn('⚠️ jsDelivr failed, trying unpkg...');
+            var script2 = document.createElement('script');
+            script2.src = 'https://unpkg.com/@supabase/supabase-js@2.43.4/dist/umd/supabase.min.js';
+            script2.onload = function () {
+                clearTimeout(window.cdnLoadTimeout);
+                window.supabaseLoaded = true;
+                console.log('✅ Supabase loaded from unpkg');
+            };
+            script2.onerror = function () {
+                console.warn('⚠️ unpkg failed, trying esm.sh...');
+                loadEsmSh();
+            };
+            document.head.appendChild(script2);
+        };
+        document.head.appendChild(script1);
+    </script>
+
+    <script src="src/supabaseClient.js"></script>
+
+    <script src="src/databaseSeeding.js"></script>
+
+    <script src="src/authService.js"></script>
+
+    <script src="src/loginscript.js"></script>
+</body>
+
+</html>
