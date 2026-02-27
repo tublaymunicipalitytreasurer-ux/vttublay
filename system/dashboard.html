@@ -64,20 +64,20 @@
                 <thead>
                     <tr>
                         <th class="sortable" onclick="sortTable('no')">NO. <span class="sort-indicator"
-                                id="sort-no">↕️</span></th>
+                                id="sort-no">â†•ï¸</span></th>
                         <th class="sortable" onclick="sortTable('name')">Name <span class="sort-indicator"
-                                id="sort-name">↕️</span></th>
+                                id="sort-name">â†•ï¸</span></th>
                         <th class="sortable" onclick="sortTable('plateNumber')">Plate Number <span
-                                class="sort-indicator" id="sort-plate">↕️</span></th>
+                                class="sort-indicator" id="sort-plateNumber">â†•ï¸</span></th>
                         <th class="sortable" onclick="sortTable('date')">Date <span class="sort-indicator"
-                                id="sort-date">↕️</span></th>
+                                id="sort-date">â†•ï¸</span></th>
                         <th>Section</th>
                         <th>Offenses</th>
                         <th>Level</th>
-                        <th class="sortable" onclick="sortTable('fine')">Fine (₱) <span class="sort-indicator"
-                                id="sort-fine">↕️</span></th>
+                        <th class="sortable" onclick="sortTable('fine')">Fine (â‚±) <span class="sort-indicator"
+                                id="sort-fine">â†•ï¸</span></th>
                         <th class="sortable" onclick="sortTable('status')">Status <span class="sort-indicator"
-                                id="sort-status">↕️</span></th>
+                                id="sort-status">â†•ï¸</span></th>
                         <th>Official Receipt #</th>
                         <th>Date Paid</th>
                         <th>Actions</th>
@@ -149,7 +149,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="fine">Fine Amount (₱) *</label>
+                            <label for="fine">Fine Amount (â‚±) *</label>
                             <input type="number" id="fine" required min="0" readonly>
                             <div id="fineInfo" class="fine-info"></div>
                         </div>
@@ -197,7 +197,7 @@
                         <input type="text" id="paymentOffense" readonly class="form-control">
                     </div>
                     <div class="form-group">
-                        <label for="paymentFine">Fine Amount (₱)</label>
+                        <label for="paymentFine">Fine Amount (â‚±)</label>
                         <input type="number" id="paymentFine" readonly class="form-control">
                     </div>
                     <div class="form-group">
@@ -267,15 +267,15 @@
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="firstOffense">1st Offense Fine (₱) *</label>
+                                <label for="firstOffense">1st Offense Fine (â‚±) *</label>
                                 <input type="number" id="firstOffense" required min="0">
                             </div>
                             <div class="form-group">
-                                <label for="secondOffense">2nd Offense Fine (₱) *</label>
+                                <label for="secondOffense">2nd Offense Fine (â‚±) *</label>
                                 <input type="number" id="secondOffense" required min="0">
                             </div>
                             <div class="form-group">
-                                <label for="thirdOffense">3rd Offense Fine (₱) *</label>
+                                <label for="thirdOffense">3rd Offense Fine (â‚±) *</label>
                                 <input type="number" id="thirdOffense" required min="0">
                             </div>
                         </div>
