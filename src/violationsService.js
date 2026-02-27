@@ -1,4 +1,3 @@
-
 function getSupabaseClient() {
     return window.supabaseClient || (typeof supabase !== 'undefined' ? supabase : null);
 }
@@ -300,13 +299,11 @@ async function markAsPaid(id, officialReceiptNumber, paymentDate) {
             throw new Error('User not authenticated');
         }
 
-
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         if (!uuidRegex.test(id)) {
             console.error('Invalid violation ID format:', id);
             throw new Error('Invalid violation ID format');
         }
-
 
         if (!officialReceiptNumber || officialReceiptNumber.trim().length === 0) {
             throw new Error('Receipt number is required');
@@ -322,10 +319,9 @@ async function markAsPaid(id, officialReceiptNumber, paymentDate) {
             throw new Error('Supabase not initialized');
         }
 
-
         const { data: checkData, error: checkError } = await supabaseClient
             .from('violations')
-            .select('id, status')
+            .select('id, status, no, name, plate_number')
             .eq('id', id)
             .eq('user_id', userId)
             .maybeSingle();
@@ -340,24 +336,32 @@ async function markAsPaid(id, officialReceiptNumber, paymentDate) {
             throw new Error('Violation not found or not authorized');
         }
 
-
-        const { data: existingReceipt, error: receiptCheckError } = await supabaseClient
+        const { data: receiptMatches, error: receiptCheckError } = await supabaseClient
             .from('violations')
-            .select('id, no, name')
+            .select('id, no, name, plate_number')
             .eq('user_id', userId)
             .eq('official_receipt_number', officialReceiptNumber)
-            .neq('id', id)
-            .maybeSingle();
+            .neq('id', id);
 
-        if (receiptCheckError && receiptCheckError.code !== 'PGRST116') {
+        if (receiptCheckError) {
             console.error('Error checking receipt:', receiptCheckError);
             throw receiptCheckError;
         }
 
-        if (existingReceipt) {
-            throw new Error(`Official Receipt Number ${officialReceiptNumber} is already used for violation #${existingReceipt.no}`);
-        }
+        const targetNo = String(checkData.no || '');
+        const targetName = String(checkData.name || '').trim().toLowerCase();
+        const targetPlate = String(checkData.plate_number || '').trim().toUpperCase();
 
+        const conflictingReceipt = (receiptMatches || []).find(v => {
+            const sameGroup =
+                String(v.no || '') === targetNo &&
+                String(v.name || '').trim().toLowerCase() === targetName &&
+                String(v.plate_number || '').trim().toUpperCase() === targetPlate;
+            return !sameGroup;
+        });
+        if (conflictingReceipt) {
+            throw new Error(`Official Receipt Number ${officialReceiptNumber} is already used for violation #${conflictingReceipt.no}`);
+        }
 
         const updateData = {
             status: 'Paid',
@@ -366,12 +370,14 @@ async function markAsPaid(id, officialReceiptNumber, paymentDate) {
             updated_at: new Date().toISOString()
         };
 
-        console.log('Updating violation with data:', updateData);
+        console.log('Updating violations with same no:', { no: checkData.no, updateData });
 
         const { data, error } = await supabaseClient
             .from('violations')
             .update(updateData)
-            .eq('id', id)
+            .eq('no', checkData.no)
+            .eq('name', checkData.name)
+            .eq('plate_number', checkData.plate_number)
             .eq('user_id', userId)
             .select();
 
@@ -385,12 +391,14 @@ async function markAsPaid(id, officialReceiptNumber, paymentDate) {
             throw new Error('Violation not found or not authorized');
         }
 
-
-        const mappedData = mapViolationFromDB(data[0]);
+        const currentUpdated = data.find(v => v.id === id) || data[0];
+        const mappedData = mapViolationFromDB(currentUpdated);
 
         return {
             success: true,
             data: mappedData,
+            count: data.length,
+            no: checkData.no,
             error: null
         };
 
@@ -399,6 +407,7 @@ async function markAsPaid(id, officialReceiptNumber, paymentDate) {
         return {
             success: false,
             data: null,
+            count: 0,
             error: error.message || 'Failed to mark as paid'
         };
     }
