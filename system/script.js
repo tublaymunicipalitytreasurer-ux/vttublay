@@ -339,7 +339,7 @@ function addAnotherViolationRow() {
             </select>
         </div>
         <div class="form-group">
-            <label>Fee (₱)</label>
+            <label>Fee (?)</label>
             <input type="number" class="extra-fine" readonly>
         </div>
         <div class="form-group" style="display:flex;align-items:flex-end;">
@@ -917,7 +917,7 @@ async function updateFine() {
                     if (fineInfo) {
                         const breakdown = fines
                             .sort((a, b) => a.level - b.level)
-                            .map(f => `<div>Level ${f.level}: ₱${f.amount.toLocaleString()}</div>`)
+                            .map(f => `<div>Level ${f.level}: ?${f.amount.toLocaleString()}</div>`)
                             .join('');
                         fineInfo.innerHTML = `<div><strong>Fine Schedule:</strong></div>${breakdown}`;
                     }
@@ -1030,7 +1030,7 @@ function renderTable(data) {
                 <td>${escapeHTML(violation.section || '')}</td>
                 <td>${escapeHTML(violation.offenses || '')}</td>
                 <td>${escapeHTML(levelText)}</td>
-                <td>₱${(violation.fine || 0).toLocaleString()}</td>
+                <td>?${(violation.fine || 0).toLocaleString()}</td>
                 <td><span class="status ${(violation.status || '').toLowerCase()}">${escapeHTML(violation.status || '')}</span></td>
                 <td>${escapeHTML(violation.officialReceiptNumber || '')}</td>
                 <td>${escapeHTML(violation.datePaid || '')}</td>
@@ -1177,9 +1177,9 @@ function updateSortIndicators() {
     sortIndicators.forEach(indicator => {
         const column = indicator.id.replace('sort-', '');
         if (column === appState.currentSort.column) {
-            indicator.textContent = appState.currentSort.direction === 'asc' ? '⬆️' : '⬇️';
+            indicator.textContent = appState.currentSort.direction === 'asc' ? '??' : '??';
         } else {
-            indicator.textContent = '↕️';
+            indicator.textContent = '??';
         }
     });
 }
@@ -1513,7 +1513,6 @@ function checkDuplicateReceipt() {
         warningElement.style.display = 'none';
         return;
     }
-    
 
     const validation = validateReceiptNumber(receiptValue);
     if (!validation.valid) {
@@ -1521,12 +1520,24 @@ function checkDuplicateReceipt() {
         warningElement.style.display = 'block';
         return;
     }
-    
 
-    const duplicate = violations.find(v => 
-        v.officialReceiptNumber && v.officialReceiptNumber === receiptValue && 
-        v.id !== appState.currentViolationId
-    );
+    const currentViolation = violations.find(v => v.id === appState.currentViolationId);
+    const currentNo = currentViolation ? String(currentViolation.no || '') : '';
+    const currentName = currentViolation ? String(currentViolation.name || '').trim().toLowerCase() : '';
+    const currentPlate = currentViolation ? String(currentViolation.plateNumber || '').trim().toUpperCase() : '';
+
+    const duplicate = violations.find(v => {
+        if (!v.officialReceiptNumber || v.officialReceiptNumber !== receiptValue || v.id === appState.currentViolationId) {
+            return false;
+        }
+
+        const sameGroup =
+            String(v.no || '') === currentNo &&
+            String(v.name || '').trim().toLowerCase() === currentName &&
+            String(v.plateNumber || '').trim().toUpperCase() === currentPlate;
+
+        return !sameGroup;
+    });
     
     if (duplicate) {
         warningElement.textContent = 'This Official Receipt Number is already used!';
@@ -1805,19 +1816,19 @@ async function handlePaymentSubmit(e) {
         const result = await markAsPaid(appState.currentViolationId, officialReceiptNumber, paymentDate);
         
         if (result.success) {
-
-            const index = violations.findIndex(v => v.id === appState.currentViolationId);
-            if (index !== -1) {
-                violations[index] = result.data;
+            const refresh = await fetchViolations();
+            if (refresh.success) {
+                violations = refresh.data;
             }
-            
+
             closePaymentModal();
-            renderTable();
-            
+            renderTable(getFilteredData());
+
+            const updatedCount = Number(result.count || 1);
             showToast(
                 isEditPaidDetails
-                    ? `Updated paid details: ${escapeHTML(violation.name)} - ${escapeHTML(violation.offenses)}`
-                    : `Marked as paid: ${escapeHTML(violation.name)} - ${escapeHTML(violation.offenses)}`,
+                    ? `Updated paid details for ${updatedCount} violation(s)`
+                    : `Marked ${updatedCount} violation(s) as paid`,
                 'success'
             );
             appState.currentViolationId = null;
@@ -1968,7 +1979,7 @@ function escapeHTML(text) {
 
 
 function exportToCSV() {
-    console.log('📊 Exporting to CSV...');
+    console.log('?? Exporting to CSV...');
     
 
     let dataToExport = [...violations];
@@ -2034,7 +2045,7 @@ function exportToCSV() {
             'Offenses',
             'Section',
             'Level',
-            'Fine (₱)',
+            'Fine (?)',
             'Status',
             'Official Receipt Number',
             'Date Paid'
@@ -2397,39 +2408,39 @@ async function deleteSection(sectionId, sectionNameFromButton) {
 
 
         let message = `Are you sure you want to delete section "${sectionNameToUse || 'Untitled'}"?`;
-        message += `\n\n⚠️ THIS ACTION CANNOT BE UNDONE.`;
+        message += `\n\n?? THIS ACTION CANNOT BE UNDONE.`;
 
         if (hasViolations) {
-            message += `\n\n🔴 ${violationsData.length} violation(s) are using this section.`;
+            message += `\n\n?? ${violationsData.length} violation(s) are using this section.`;
             message += `\n\nDeleting this section will:`;
-            message += `\n  • Remove the section from these violations`;
-            message += `\n  • Set their section_id to NULL`;
-            message += `\n  • Keep the violation records but without section reference`;
+            message += `\n  � Remove the section from these violations`;
+            message += `\n  � Set their section_id to NULL`;
+            message += `\n  � Keep the violation records but without section reference`;
             
             if (violationsData.length > 0) {
                 message += `\n\nAffected violations:`;
                 violationsData.forEach(v => {
-                    message += `\n  • #${v.no} - ${v.name} (${v.plate_number})`;
+                    message += `\n  � #${v.no} - ${v.name} (${v.plate_number})`;
                 });
                 if (violationsData.length >= 5) {
-                    message += `\n  • ... and ${violationsData.length - 5} more`;
+                    message += `\n  � ... and ${violationsData.length - 5} more`;
                 }
             }
         }
 
         if (hasOffenses) {
-            message += `\n\n🟠 ${offenses.length} offense(s) belong to this section.`;
+            message += `\n\n?? ${offenses.length} offense(s) belong to this section.`;
             message += `\n\nDeleting this section will:`;
-            message += `\n  • DELETE ALL ${offenses.length} OFFENSES and their fines`;
-            message += `\n  • Any violations using these offenses will have offense_id set to NULL`;
+            message += `\n  � DELETE ALL ${offenses.length} OFFENSES and their fines`;
+            message += `\n  � Any violations using these offenses will have offense_id set to NULL`;
             
             if (offenses.length > 0) {
                 message += `\n\nOffenses to be deleted:`;
                 offenses.slice(0, 5).forEach(o => {
-                    message += `\n  • ${o.offense_name}`;
+                    message += `\n  � ${o.offense_name}`;
                 });
                 if (offenses.length > 5) {
-                    message += `\n  • ... and ${offenses.length - 5} more`;
+                    message += `\n  � ... and ${offenses.length - 5} more`;
                 }
             }
         }
@@ -2493,7 +2504,7 @@ async function deleteSection(sectionId, sectionNameFromButton) {
 
 
 
-            console.log('🔄 Force refreshing all UI components...');
+            console.log('?? Force refreshing all UI components...');
             
 
             editingSection = null;
@@ -3040,7 +3051,7 @@ async function renderOffensesList() {
                         <div class="section-name" style="font-size: 12px; color: #666;">${escapedSectionName}</div>
                         <div class="offense-name">${escapedOffenseName}</div>
                         <div class="offense-fines">
-                            1st: ₱${fines[1].toLocaleString()} | 2nd: ₱${fines[2].toLocaleString()} | 3rd: ₱${fines[3].toLocaleString()}
+                            1st: ?${fines[1].toLocaleString()} | 2nd: ?${fines[2].toLocaleString()} | 3rd: ?${fines[3].toLocaleString()}
                         </div>
                     </div>
                     <div class="offense-actions">
@@ -3295,17 +3306,17 @@ async function handleOffenseDelete(e) {
         let message = `Are you sure you want to delete offense "${offenseName}"?`;
         
         if (hasViolations) {
-            message += `\n\n⚠️ WARNING: This offense is used in ${violations.length} violation(s).`;
+            message += `\n\n?? WARNING: This offense is used in ${violations.length} violation(s).`;
             message += `\n\nDeleting this offense will:`;
-            message += `\n  • Remove it from these violations`;
-            message += `\n  • Set their offense_id to NULL`;
-            message += `\n  • Keep the violation records but without offense reference`;
+            message += `\n  � Remove it from these violations`;
+            message += `\n  � Set their offense_id to NULL`;
+            message += `\n  � Keep the violation records but without offense reference`;
             message += `\n\nAffected violations:`;
             violations.forEach(v => {
-                message += `\n  • #${v.no} - ${v.name} (${v.plate_number})`;
+                message += `\n  � #${v.no} - ${v.name} (${v.plate_number})`;
             });
             if (violations.length >= 5) {
-                message += `\n  • ... and ${violations.length - 5} more`;
+                message += `\n  � ... and ${violations.length - 5} more`;
             }
             message += `\n\nThis action CANNOT be undone.`;
         }
@@ -3338,7 +3349,7 @@ async function handleOffenseDelete(e) {
             editingOffense = null;
             
 
-            console.log('🔄 Refreshing offenses list after deletion...');
+            console.log('?? Refreshing offenses list after deletion...');
             await renderOffensesList();
             await populateOffenses();
             await populateManageOffensesDropdowns();
@@ -3352,7 +3363,7 @@ async function handleOffenseDelete(e) {
                 }
             }
             
-            showToast(`🗑️ Offense "${escapeHTML(offenseName)}" deleted!`, 'error');
+            showToast(`??? Offense "${escapeHTML(offenseName)}" deleted!`, 'error');
         }
         
     } catch (error) {
@@ -3482,7 +3493,7 @@ async function addNewOffense(event) {
         if (checkError) throw checkError;
         
         if (existingOffense) {
-            alert(`⚠️ Offense "${offenseNameValue}" already exists in section "${sectionName}"!`);
+            alert(`?? Offense "${offenseNameValue}" already exists in section "${sectionName}"!`);
             return false;
         }
         
@@ -3519,7 +3530,7 @@ async function addNewOffense(event) {
         sectionSelect.value = '';
         
 
-        console.log('🔄 Refreshing UI after adding offense...');
+        console.log('?? Refreshing UI after adding offense...');
         
         await Promise.all([
             renderOffensesList(),
@@ -3565,7 +3576,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await initializeApp();
     } else {
 
-        console.log('⏳ Waiting for Supabase client...');
+        console.log('? Waiting for Supabase client...');
         const checkInterval = setInterval(async () => {
             if (window.supabaseClient) {
                 clearInterval(checkInterval);
@@ -3599,8 +3610,3 @@ function makeRowsCollapsible() {
         });
     });
 }
-
-
-
-
-
