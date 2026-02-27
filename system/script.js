@@ -1177,9 +1177,9 @@ function updateSortIndicators() {
     sortIndicators.forEach(indicator => {
         const column = indicator.id.replace('sort-', '');
         if (column === appState.currentSort.column) {
-            indicator.textContent = appState.currentSort.direction === 'asc' ? '??' : '??';
+            indicator.textContent = appState.currentSort.direction === 'asc' ? '\u25B2' : '\u25BC';
         } else {
-            indicator.textContent = '??';
+            indicator.textContent = '\u2195';
         }
     });
 }
