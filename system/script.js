@@ -339,7 +339,7 @@ function addAnotherViolationRow() {
             </select>
         </div>
         <div class="form-group">
-            <label>Fee (?)</label>
+            <label>Fee (₱)</label>
             <input type="number" class="extra-fine" readonly>
         </div>
         <div class="form-group" style="display:flex;align-items:flex-end;">
@@ -917,7 +917,7 @@ async function updateFine() {
                     if (fineInfo) {
                         const breakdown = fines
                             .sort((a, b) => a.level - b.level)
-                            .map(f => `<div>Level ${f.level}: ?${f.amount.toLocaleString()}</div>`)
+                            .map(f => `<div>Level ${f.level}: ₱${f.amount.toLocaleString()}</div>`)
                             .join('');
                         fineInfo.innerHTML = `<div><strong>Fine Schedule:</strong></div>${breakdown}`;
                     }
@@ -1030,7 +1030,7 @@ function renderTable(data) {
                 <td>${escapeHTML(violation.section || '')}</td>
                 <td>${escapeHTML(violation.offenses || '')}</td>
                 <td>${escapeHTML(levelText)}</td>
-                <td>?${(violation.fine || 0).toLocaleString()}</td>
+                <td>₱${(violation.fine || 0).toLocaleString()}</td>
                 <td><span class="status ${(violation.status || '').toLowerCase()}">${escapeHTML(violation.status || '')}</span></td>
                 <td>${escapeHTML(violation.officialReceiptNumber || '')}</td>
                 <td>${escapeHTML(violation.datePaid || '')}</td>
@@ -2413,17 +2413,17 @@ async function deleteSection(sectionId, sectionNameFromButton) {
         if (hasViolations) {
             message += `\n\n?? ${violationsData.length} violation(s) are using this section.`;
             message += `\n\nDeleting this section will:`;
-            message += `\n  � Remove the section from these violations`;
-            message += `\n  � Set their section_id to NULL`;
-            message += `\n  � Keep the violation records but without section reference`;
+            message += `\n  ï¿½ Remove the section from these violations`;
+            message += `\n  ï¿½ Set their section_id to NULL`;
+            message += `\n  ï¿½ Keep the violation records but without section reference`;
             
             if (violationsData.length > 0) {
                 message += `\n\nAffected violations:`;
                 violationsData.forEach(v => {
-                    message += `\n  � #${v.no} - ${v.name} (${v.plate_number})`;
+                    message += `\n  ï¿½ #${v.no} - ${v.name} (${v.plate_number})`;
                 });
                 if (violationsData.length >= 5) {
-                    message += `\n  � ... and ${violationsData.length - 5} more`;
+                    message += `\n  ï¿½ ... and ${violationsData.length - 5} more`;
                 }
             }
         }
@@ -2431,16 +2431,16 @@ async function deleteSection(sectionId, sectionNameFromButton) {
         if (hasOffenses) {
             message += `\n\n?? ${offenses.length} offense(s) belong to this section.`;
             message += `\n\nDeleting this section will:`;
-            message += `\n  � DELETE ALL ${offenses.length} OFFENSES and their fines`;
-            message += `\n  � Any violations using these offenses will have offense_id set to NULL`;
+            message += `\n  ï¿½ DELETE ALL ${offenses.length} OFFENSES and their fines`;
+            message += `\n  ï¿½ Any violations using these offenses will have offense_id set to NULL`;
             
             if (offenses.length > 0) {
                 message += `\n\nOffenses to be deleted:`;
                 offenses.slice(0, 5).forEach(o => {
-                    message += `\n  � ${o.offense_name}`;
+                    message += `\n  ï¿½ ${o.offense_name}`;
                 });
                 if (offenses.length > 5) {
-                    message += `\n  � ... and ${offenses.length - 5} more`;
+                    message += `\n  ï¿½ ... and ${offenses.length - 5} more`;
                 }
             }
         }
@@ -3051,7 +3051,7 @@ async function renderOffensesList() {
                         <div class="section-name" style="font-size: 12px; color: #666;">${escapedSectionName}</div>
                         <div class="offense-name">${escapedOffenseName}</div>
                         <div class="offense-fines">
-                            1st: ?${fines[1].toLocaleString()} | 2nd: ?${fines[2].toLocaleString()} | 3rd: ?${fines[3].toLocaleString()}
+                            1st: ₱${fines[1].toLocaleString()} | 2nd: ₱${fines[2].toLocaleString()} | 3rd: ₱${fines[3].toLocaleString()}
                         </div>
                     </div>
                     <div class="offense-actions">
@@ -3308,15 +3308,15 @@ async function handleOffenseDelete(e) {
         if (hasViolations) {
             message += `\n\n?? WARNING: This offense is used in ${violations.length} violation(s).`;
             message += `\n\nDeleting this offense will:`;
-            message += `\n  � Remove it from these violations`;
-            message += `\n  � Set their offense_id to NULL`;
-            message += `\n  � Keep the violation records but without offense reference`;
+            message += `\n  ï¿½ Remove it from these violations`;
+            message += `\n  ï¿½ Set their offense_id to NULL`;
+            message += `\n  ï¿½ Keep the violation records but without offense reference`;
             message += `\n\nAffected violations:`;
             violations.forEach(v => {
-                message += `\n  � #${v.no} - ${v.name} (${v.plate_number})`;
+                message += `\n  ï¿½ #${v.no} - ${v.name} (${v.plate_number})`;
             });
             if (violations.length >= 5) {
-                message += `\n  � ... and ${violations.length - 5} more`;
+                message += `\n  ï¿½ ... and ${violations.length - 5} more`;
             }
             message += `\n\nThis action CANNOT be undone.`;
         }
