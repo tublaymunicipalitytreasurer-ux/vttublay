@@ -1521,6 +1521,7 @@ function checkDuplicateReceipt() {
         return;
     }
 
+
     const currentViolation = violations.find(v => v.id === appState.currentViolationId);
     const currentNo = currentViolation ? String(currentViolation.no || '') : '';
     const currentName = currentViolation ? String(currentViolation.name || '').trim().toLowerCase() : '';
@@ -1538,6 +1539,7 @@ function checkDuplicateReceipt() {
 
         return !sameGroup;
     });
+
     
     if (duplicate) {
         warningElement.textContent = 'This Official Receipt Number is already used!';
